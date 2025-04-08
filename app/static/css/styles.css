@@ -1,0 +1,56 @@
+/* Additional CSS styles for Cloud File Editor */
+
+/* Table hover effects */
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* Active editable cell */
+.editable-cell.edit-mode {
+    padding: 0;
+}
+
+.editable-cell.edit-mode input {
+    width: 100%;
+    border-radius: 0;
+    border: 2px solid #007bff;
+    padding: 6px;
+}
+
+/* Custom pagination sizing */
+.pagination {
+    margin-top: 2rem;
+}
+
+/* Help text for upload form */
+.form-text {
+    margin-top: 0.5rem;
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+/* Make sure action buttons are properly aligned */
+.save-btn, .cancel-btn {
+    margin-right: 5px;
+}
+
+/* Flash message animations */
+.alert {
+    transition: opacity 0.5s ease-in-out;
+}
+
+.alert.fade {
+    opacity: 1;
+}
+
+/* Responsive fixes for small screens */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.4rem;
+        font-size: 0.75rem;
+    }
+} 

@@ -1,0 +1,45 @@
+{% extends 'base.html' %} {% block title %}Upload File{% endblock %} {% block content %}
+<div class="row">
+  <div class="col-md-8 offset-md-2">
+    <div class="card">
+      <div class="card-header">
+        <h2 class="mb-0">Upload File</h2>
+      </div>
+      <div class="card-body">
+        <form method="POST" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label for="csv_file" class="form-label">Select a CSV or TSV file to upload</label>
+            <input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv,.tsv" required />
+            <div class="form-text">
+              The file will be parsed and saved to the database. Make sure it has a header row.
+            </div>
+          </div>
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary">Upload and Process</button>
+            <a href="{{ url_for('api.index') }}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mt-4">
+      <div class="card-header">
+        <h3 class="mb-0">Instructions</h3>
+      </div>
+      <div class="card-body">
+        <p>Please follow these guidelines when uploading files:</p>
+        <ul>
+          <li>
+            The file must be in CSV format (comma-separated) with a <strong>.csv</strong> extension, or TSV format
+            (tab-separated) with a <strong>.tsv</strong> extension.
+          </li>
+          <li>The file should have a header row with column names.</li>
+          <li>All rows should have the same number of columns.</li>
+          <li>The system will attempt to automatically detect data types.</li>
+          <li>Files larger than 10MB may take longer to process.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
