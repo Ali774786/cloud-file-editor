@@ -1,0 +1,238 @@
+{% extends 'base.html' %} {% block title %}View {{ file_name }}{% endblock %} {% block content %}
+<div class="row mb-3">
+  <div class="col">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('s3.list_processes') }}">Process Folders</a></li>
+        <li class="breadcrumb-item">
+          <a href="{{ url_for('s3.list_files', process_id=process_id) }}">{{ process_id }}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{{ file_name }}</li>
+      </ol>
+    </nav>
+    <h1><i class="fas fa-file-alt me-2"></i> {{ file_name }}</h1>
+  </div>
+</div>
+
+<div class="row mb-3">
+  <div class="col">
+    <div class="alert alert-info">
+      <i class="fas fa-info-circle me-2"></i> Click on any cell to edit its value. Changes will be saved to a new file
+      with "_latest" appended to the name.
+    </div>
+  </div>
+</div>
+
+{% if records %}
+<div class="row">
+  <div class="col">
+    <div class="card">
+      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">File Contents</h5>
+        <input type="text" id="searchInput" class="form-control form-control-sm w-25" placeholder="Search..." />
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover" id="dataTable">
+            <thead class="table-light">
+              <tr>
+                <th>#</th>
+                {% for column in columns %}
+                <th>{{ column }}</th>
+                {% endfor %}
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for record in records %}
+              <tr data-index="{{ loop.index0 }}">
+                <td>{{ loop.index }}</td>
+                {% for column in columns %}
+                <td class="editable-cell" data-column="{{ column }}">{{ record[column] }}</td>
+                {% endfor %}
+                <td>
+                  <button class="btn btn-sm btn-primary save-btn" style="display: none">Save</button>
+                  <button class="btn btn-sm btn-secondary cancel-btn" style="display: none">Cancel</button>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-2"></i> No data found in this file.</div>
+{% endif %}
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="successModalLabel">Success</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Your changes have been saved successfully to a new file.</p>
+        <p><strong>New file:</strong> <span id="newFileName"></span></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <a href="#" class="btn btn-primary" id="viewNewFileBtn">View New File</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+<style>
+  .editable-cell {
+    cursor: pointer;
+  }
+  .editable-cell:hover {
+    background-color: #f8f9fa;
+  }
+  .edit-mode {
+    background-color: #e9ecef;
+  }
+</style>
+{% endblock %} {% block scripts %}
+<script>
+  $(document).ready(function() {
+      // Store original data from server
+      const originalData = {{ df_json | safe }};
+      const filePath = "{{ file_path }}";
+      let rowChanges = {};
+
+      // Search functionality
+      $("#searchInput").on("keyup", function() {
+          const value = $(this).val().toLowerCase();
+          $("#dataTable tbody tr").filter(function() {
+              $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+          });
+      });
+
+      // Make cells editable on click
+      $('.editable-cell').on('click', function() {
+          const cell = $(this);
+          const row = cell.closest('tr');
+          const rowIndex = parseInt(row.data('index'));
+          const column = cell.data('column');
+          const currentValue = cell.text();
+
+          // Store original data for potential cancellation
+          if (!rowChanges[rowIndex]) {
+              rowChanges[rowIndex] = {};
+          }
+          if (!rowChanges[rowIndex][column]) {
+              rowChanges[rowIndex][column] = currentValue;
+          }
+
+          // Create an input field
+          const input = $('<input>')
+              .attr('type', 'text')
+              .addClass('form-control')
+              .val(currentValue);
+
+          // Replace the cell content with the input
+          cell.html(input).addClass('edit-mode');
+          input.focus();
+
+          // Show the save and cancel buttons
+          row.find('.save-btn, .cancel-btn').show();
+      });
+
+      // Cancel button functionality
+      $('.cancel-btn').on('click', function() {
+          const row = $(this).closest('tr');
+          const rowIndex = parseInt(row.data('index'));
+
+          // Restore original values
+          row.find('.editable-cell').each(function() {
+              const cell = $(this);
+              const column = cell.data('column');
+
+              if (rowChanges[rowIndex] && rowChanges[rowIndex][column]) {
+                  cell.text(rowChanges[rowIndex][column]).removeClass('edit-mode');
+              } else {
+                  cell.text(originalData[rowIndex][column]).removeClass('edit-mode');
+              }
+          });
+
+          // Hide buttons
+          row.find('.save-btn, .cancel-btn').hide();
+      });
+
+      // Save button functionality
+      $('.save-btn').on('click', function() {
+          const row = $(this).closest('tr');
+          const rowIndex = parseInt(row.data('index'));
+          const updatedRow = {};
+
+          // Collect values from all inputs
+          row.find('.editable-cell').each(function() {
+              const cell = $(this);
+              const column = cell.data('column');
+              const input = cell.find('input');
+
+              if (input.length) {
+                  updatedRow[column] = input.val();
+              } else {
+                  updatedRow[column] = cell.text();
+              }
+          });
+
+          // Prepare the data for the API call
+          const data = {
+              file_path: filePath,
+              row_index: rowIndex,
+              updated_row: updatedRow
+          };
+
+          // Send AJAX request to update the data
+          $.ajax({
+              url: "{{ url_for('s3.update_file') }}",
+              method: "POST",
+              contentType: "application/json",
+              data: JSON.stringify(data),
+              success: function(response) {
+                  if (response.success) {
+                      // Update the cells with the saved values
+                      row.find('.editable-cell').each(function() {
+                          const cell = $(this);
+                          const column = cell.data('column');
+                          cell.text(updatedRow[column]).removeClass('edit-mode');
+                      });
+
+                      // Hide buttons
+                      row.find('.save-btn, .cancel-btn').hide();
+
+                      // Update original data for this row
+                      for (const column in updatedRow) {
+                          originalData[rowIndex][column] = updatedRow[column];
+                      }
+
+                      // Show success modal
+                      const newFileName = response.new_file_path.split('/').pop();
+                      $('#newFileName').text(newFileName);
+                      $('#viewNewFileBtn').attr('href', "{{ url_for('s3.view_file') }}?file_path=" + response.new_file_path);
+                      $('#successModal').modal('show');
+                  } else {
+                      alert('Error: ' + response.message);
+                  }
+              },
+              error: function(xhr) {
+                  let errorMessage = 'An error occurred while saving changes.';
+                  if (xhr.responseJSON && xhr.responseJSON.message) {
+                      errorMessage = xhr.responseJSON.message;
+                  }
+                  alert('Error: ' + errorMessage);
+              }
+          });
+      });
+  });
+</script>
+{% endblock %}

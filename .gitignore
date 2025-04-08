@@ -9,7 +9,7 @@ venv/
 __pycache__/
 
 *.log*
-
+*.tsv
 staticfiles
 
 .idea

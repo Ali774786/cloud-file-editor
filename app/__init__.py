@@ -19,7 +19,8 @@ def create_app():
     migrate.init_app(app, db)
     
     # Register blueprints
-    from app.routes import api_bp
+    from app.routes import api_bp, s3_bp
     app.register_blueprint(api_bp)
+    app.register_blueprint(s3_bp)
     
     return app

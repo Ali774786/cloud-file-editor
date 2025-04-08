@@ -51,6 +51,13 @@
               >Upload File</a
             >
           </li>
+          <li class="nav-item">
+            <a
+              href="{{ url_for('s3.list_processes') }}"
+              class="nav-link {% if '/s3/' in request.path %}active{% endif %}"
+              >S3 Browser</a
+            >
+          </li>
         </ul>
       </header>
 
