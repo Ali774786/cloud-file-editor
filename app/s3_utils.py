@@ -40,8 +40,7 @@ def list_process_folders():
             Prefix=prefix,
             Delimiter='/'
         )
-        print("response")
-        print(response)
+
         folders = []
         if 'CommonPrefixes' in response:
             for obj in response['CommonPrefixes']:

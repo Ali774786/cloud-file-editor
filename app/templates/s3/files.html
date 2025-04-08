@@ -8,7 +8,7 @@
       </ol>
     </nav>
     <h1>Files in Process: {{ process_id }}</h1>
-    <p class="lead">Select a TSV file to view and edit its contents</p>
+    <p class="lead">Select a file to view and edit its contents</p>
   </div>
 </div>
 
@@ -16,7 +16,7 @@
   <div class="col">
     <div class="card">
       <div class="card-header bg-primary text-white">
-        <h5 class="mb-0">Available TSV Files</h5>
+        <h5 class="mb-0">Available Files</h5>
       </div>
       <div class="card-body">
         {% if files %}
@@ -50,7 +50,7 @@
           </table>
         </div>
         {% else %}
-        <div class="alert alert-info">No TSV files found in this process folder.</div>
+        <div class="alert alert-info">No files found in this process folder.</div>
         {% endif %}
       </div>
     </div>

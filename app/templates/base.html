@@ -39,23 +39,9 @@
         <ul class="nav nav-pills">
           <li class="nav-item">
             <a
-              href="{{ url_for('api.index') }}"
-              class="nav-link {% if request.path == url_for('api.index') %}active{% endif %}"
-              >Home</a
-            >
-          </li>
-          <li class="nav-item">
-            <a
-              href="{{ url_for('api.upload_file') }}"
-              class="nav-link {% if request.path == url_for('api.upload_file') %}active{% endif %}"
-              >Upload File</a
-            >
-          </li>
-          <li class="nav-item">
-            <a
               href="{{ url_for('s3.list_processes') }}"
-              class="nav-link {% if '/s3/' in request.path %}active{% endif %}"
-              >S3 Browser</a
+              class="nav-link {% if request.path == url_for('s3.list_processes') %}active{% endif %}"
+              >Home</a
             >
           </li>
         </ul>

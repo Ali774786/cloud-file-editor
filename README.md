@@ -1,4 +1,4 @@
-# Data Manager
+# Cloud File Editor
 
 A Flask web application that allows you to work directly with CSV and TSV files stored in Amazon S3 buckets.
 
@@ -44,12 +44,12 @@ A Flask web application that allows you to work directly with CSV and TSV files 
 
    ```bash
    export S3_BUCKET_NAME=your-bucket-name
-   export AWS_ACCESS_KEY=your-access-key
-   export AWS_SECRET_KEY=your-secret-key
+   export AWS_ACCESS_KEY_ID=your-access-key
+   export AWS_SECRET_ACCESS_KEY=your-secret-key
    export AWS_REGION=your-region  # e.g., us-east-1
    ```
 
-   Or modify the values directly in `app/s3_utils.py`.
+   Or create a `.env` file with these variables.
 
 ## S3 Structure Requirements
 
@@ -109,26 +109,21 @@ Visit http://127.0.0.1:8080/ in your browser to access the application.
 ```
 flask_csv_app/
 ├── app/
-│   ├── __init__.py           # Flask application factory
-│   ├── s3_utils.py           # S3 utility functions
-│   ├── models/               # Database models
-│   ├── routes/               # URL routing
+│   ├── __init__.py          # Flask application factory
+│   ├── s3_utils.py          # S3 utility functions
+│   ├── routes/              # URL routing
 │   │   ├── __init__.py
-│   │   ├── urls.py           # Regular URL definitions
-│   │   └── s3_urls.py        # S3 URL definitions
-│   ├── views/                # View functions
+│   │   └── s3_urls.py       # S3 URL definitions
+│   ├── views/               # View functions
 │   │   ├── __init__.py
-│   │   ├── views.py          # Regular view logic
-│   │   └── s3_views.py       # S3 view logic
-│   ├── templates/            # HTML templates
-│   │   ├── base.html         # Base template
-│   │   ├── index.html        # Data display page
-│   │   ├── upload.html       # File upload page
-│   │   └── s3/               # S3 Templates
+│   │   └── s3_views.py      # S3 view logic
+│   ├── templates/           # HTML templates
+│   │   ├── base.html        # Base template
+│   │   └── s3/              # S3 Templates
 │   │       ├── processes.html # Process folders list
 │   │       ├── files.html     # TSV files list
 │   │       └── view_file.html # TSV file viewer/editor
-│   └── utils.py              # Utility functions
+│   └── utils.py             # Utility functions
 ├── venv/                     # Virtual environment
 ├── app.py                    # Application entry point
 ├── requirements.txt          # Project dependencies
@@ -138,8 +133,8 @@ flask_csv_app/
 ## Environment Variables
 
 - `S3_BUCKET_NAME`: Name of your S3 bucket
-- `AWS_ACCESS_KEY`: AWS access key with S3 permissions
-- `AWS_SECRET_KEY`: AWS secret key
+- `AWS_ACCESS_KEY_ID`: AWS access key with S3 permissions
+- `AWS_SECRET_ACCESS_KEY`: AWS secret key
 - `AWS_REGION`: AWS region where your bucket is located
 - `SECRET_KEY`: Secret key for session security
 
