@@ -117,6 +117,9 @@ flask_csv_app/
 │   ├── views/               # View functions
 │   │   ├── __init__.py
 │   │   └── s3_views.py      # S3 view logic
+│   ├── static/              # Static files
+│   │   └── css/             # CSS stylesheets
+│   │       └── styles.css   # Main stylesheet
 │   ├── templates/           # HTML templates
 │   │   ├── base.html        # Base template
 │   │   └── s3/              # S3 Templates
