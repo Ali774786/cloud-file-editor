@@ -29,8 +29,8 @@ def list_files(process_id):
     for file in files:
         df = read_tsv_file(file['path'])
         if df is not None:
-            print(f"File: {file['name']} - Columns: {df.columns.tolist()}")
-            print(f"Records count: {len(df)}")
+            # print(f"File: {file['name']} - Columns: {df.columns.tolist()}")
+            # print(f"Records count: {len(df)}")
             if not df.empty:
                 print(f"First record: {df.iloc[0].to_dict()}")
             
