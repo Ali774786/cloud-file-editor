@@ -8,59 +8,266 @@
       </ol>
     </nav>
     <h1>Files in Process: {{ process_id }}</h1>
-    <p class="lead">Select a file to view and edit its contents</p>
+    <p class="lead">Showing all files in this process folder</p>
   </div>
 </div>
 
-<div class="row">
+<!-- Debug info - Remove in production -->
+<div class="row mb-3 d-none">
   <div class="col">
     <div class="card">
-      <div class="card-header bg-primary text-white">
-        <h5 class="mb-0">Available Files</h5>
-      </div>
+      <div class="card-header bg-secondary text-white">Debug Information</div>
       <div class="card-body">
-        {% if files %}
-        <div class="table-responsive">
-          <table class="table table-hover">
-            <thead class="table-light">
-              <tr>
-                <th>File Name</th>
-                <th>Size</th>
-                <th>Last Modified</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for file in files %}
-              <tr>
-                <td>
-                  <i class="fas fa-file-alt me-2"></i>
-                  {{ file.name }}
-                </td>
-                <td>{{ (file.size / 1024) | round(1) }} KB</td>
-                <td>{{ file.last_modified.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-                <td>
-                  <a href="{{ url_for('s3.view_file', file_path=file.path) }}" class="btn btn-sm btn-primary">
-                    <i class="fas fa-eye me-1"></i> View
-                  </a>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% else %}
-        <div class="alert alert-info">No files found in this process folder.</div>
-        {% endif %}
+        <p>Number of files: {{ files|length }}</p>
+        <p>Number of file_data entries: {{ file_data|length }}</p>
       </div>
     </div>
   </div>
 </div>
-{% endblock %} {% block extra_css %}
+
+{% if file_data %} {% for data in file_data %}
+<div class="row mb-4">
+  <div class="col">
+    <div class="card">
+      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+          <i class="fas fa-file-alt me-2"></i> {{ data.file_info.name }}
+          <small class="ms-2 text-light"
+            >{{ (data.file_info.size / 1024) | round(1) }} KB - Last modified: {{
+            data.file_info.last_modified.strftime('%Y-%m-%d %H:%M:%S') }}</small
+          >
+        </h5>
+        <div>
+          <input
+            type="text"
+            class="form-control form-control-sm search-input"
+            placeholder="Search..."
+            data-table="{{ loop.index }}"
+          />
+          <a href="{{ url_for('s3.view_file', file_path=data.file_info.path) }}" class="btn btn-sm btn-light ms-2">
+            <i class="fas fa-edit me-1"></i> Edit Mode
+          </a>
+        </div>
+      </div>
+      <div class="card-body">
+        <!-- Debug info - Remove in production -->
+        <div class="d-none">
+          <p>Columns: {{ data.columns|join(', ') }}</p>
+          <p>Number of records: {{ data.records|length }}</p>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover file-data-table" id="dataTable{{ loop.index }}">
+            <thead class="table-light">
+              <tr>
+                <th>#</th>
+                {% for column in data.columns %}
+                <th>{{ column }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for record in data.records %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                {% for column in data.columns %}
+                <td>{% if record[column] is not none %} {{ record[column]|string }} {% else %} - {% endif %}</td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+              <span class="me-2">Show</span>
+              <select
+                class="form-select form-select-sm d-inline-block w-auto page-size-select"
+                data-table="{{ loop.index }}"
+              >
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+              <span class="ms-2">entries</span>
+            </div>
+            <nav>
+              <ul class="pagination pagination-sm" id="pagination{{ loop.index }}"></ul>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %} {% else %}
+<div class="row">
+  <div class="col">
+    <div class="alert alert-info">No files found in this process folder.</div>
+  </div>
+</div>
+{% endif %} {% endblock %} {% block extra_css %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 <style>
-  tr:hover {
-    cursor: pointer;
+  .card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  }
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .pagination {
+    margin-bottom: 0;
+  }
+  .page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+  }
+  .search-input {
+    width: 200px;
+    display: inline-block;
   }
 </style>
+{% endblock %} {% block scripts %}
+<script>
+  $(document).ready(function() {
+    console.log("Number of tables to initialize: {{ file_data|length }}");
+
+    // Initialize tables and pagination
+    {% for data in file_data %}
+      console.log("Initializing table {{ loop.index }} with {{ data.records|length }} rows");
+      initDataTable({{ loop.index }}, {{ data.records|length }});
+    {% endfor %}
+
+    // Function to initialize data table with pagination
+    function initDataTable(tableIndex, totalRows) {
+      const tableId = '#dataTable' + tableIndex;
+      const paginationId = '#pagination' + tableIndex;
+
+      console.log(`Setting up table ${tableId} with ${totalRows} rows`);
+
+      // Variables for pagination
+      let currentPage = 1;
+      let rowsPerPage = 10;
+
+      // Initialize all rows
+      $(`${tableId} tbody tr`).each(function(index) {
+        // Initially hide rows that are not on the first page
+        $(this).toggle(index < rowsPerPage);
+      });
+
+      // Initial pagination setup
+      setupPagination();
+
+      // Handle page size change
+      $(`.page-size-select[data-table="${tableIndex}"]`).on('change', function() {
+        rowsPerPage = parseInt($(this).val());
+        currentPage = 1;
+        setupPagination();
+        showPage(currentPage);
+      });
+
+      // Handle search input
+      $(`.search-input[data-table="${tableIndex}"]`).on('keyup', function() {
+        const value = $(this).val().toLowerCase();
+        let visibleRows = 0;
+
+        $(`${tableId} tbody tr`).each(function() {
+          const text = $(this).text().toLowerCase();
+          const isVisible = text.indexOf(value) > -1;
+
+          // Just track if it's visible for filtering, but don't toggle yet
+          if (isVisible) visibleRows++;
+          // Store visibility state as a data attribute
+          $(this).attr('data-visible', isVisible ? 'true' : 'false');
+        });
+
+        setupPagination(visibleRows);
+        showPage(1);
+      });
+
+      // Function to set up pagination
+      function setupPagination(filteredRows) {
+        const rowCount = filteredRows || totalRows;
+        const pageCount = Math.max(1, Math.ceil(rowCount / rowsPerPage));
+
+        $(paginationId).empty();
+
+        // Previous button
+        $(paginationId).append(`
+          <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" aria-label="Previous" data-page="prev">
+              <span aria-hidden="true">&laquo;</span>
+            </a>
+          </li>
+        `);
+
+        // Page numbers
+        for (let i = 1; i <= pageCount; i++) {
+          $(paginationId).append(`
+            <li class="page-item ${i === currentPage ? 'active' : ''}">
+              <a class="page-link" href="#" data-page="${i}">${i}</a>
+            </li>
+          `);
+        }
+
+        // Next button
+        $(paginationId).append(`
+          <li class="page-item ${currentPage === pageCount ? 'disabled' : ''}">
+            <a class="page-link" href="#" aria-label="Next" data-page="next">
+              <span aria-hidden="true">&raquo;</span>
+            </a>
+          </li>
+        `);
+
+        // Add click event to pagination links
+        $(`${paginationId} .page-link`).on('click', function(e) {
+          e.preventDefault();
+
+          const page = $(this).data('page');
+
+          if (page === 'prev') {
+            if (currentPage > 1) showPage(--currentPage);
+          } else if (page === 'next') {
+            if (currentPage < pageCount) showPage(++currentPage);
+          } else {
+            currentPage = parseInt(page);
+            showPage(currentPage);
+          }
+
+          // Update active state
+          $(`${paginationId} .page-item`).removeClass('active');
+          $(`${paginationId} .page-item:has(a[data-page="${currentPage}"])`).addClass('active');
+
+          // Update disabled state for prev/next
+          $(`${paginationId} .page-item:has(a[data-page="prev"])`).toggleClass('disabled', currentPage === 1);
+          $(`${paginationId} .page-item:has(a[data-page="next"])`).toggleClass('disabled', currentPage === pageCount);
+        });
+      }
+
+      // Function to show specific page
+      function showPage(page) {
+        const startIndex = (page - 1) * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+
+        let visibleCount = 0;
+
+        $(`${tableId} tbody tr`).each(function(index) {
+          // Check if this row is filtered due to search
+          const isVisible = $(this).attr('data-visible') !== 'false';
+
+          if (isVisible) {
+            // If this row passes the search filter, check if it's in the current page range
+            $(this).toggle(visibleCount >= startIndex && visibleCount < endIndex);
+            visibleCount++;
+          } else {
+            // This row is filtered out by search
+            $(this).hide();
+          }
+        });
+      }
+    }
+  });
+</script>
 {% endblock %}

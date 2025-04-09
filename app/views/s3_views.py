@@ -5,7 +5,6 @@ from app.s3_utils import (
     read_tsv_file, 
     save_updated_tsv
 )
-import pandas as pd
 
 def list_processes():
     """
@@ -21,13 +20,35 @@ def list_processes():
 def list_files(process_id):
     """
     Display a list of TSV files for a specific process
+    Along with the contents of each file
     """
     files = list_tsv_files(process_id)
+    
+    # Load content for each file
+    file_data = []
+    for file in files:
+        df = read_tsv_file(file['path'])
+        if df is not None:
+            print(f"File: {file['name']} - Columns: {df.columns.tolist()}")
+            print(f"Records count: {len(df)}")
+            if not df.empty:
+                print(f"First record: {df.iloc[0].to_dict()}")
+            
+            file_data.append({
+                'file_info': file,
+                'columns': df.columns.tolist(),
+                'records': df.to_dict('records'),
+                'df_json': df.to_json(orient='records')
+            })
+    
+    # Print debug info
+    print(f"Total files processed: {len(file_data)}")
     
     return render_template(
         's3/files.html',
         process_id=process_id,
-        files=files
+        files=files,
+        file_data=file_data
     )
 
 def view_file():
